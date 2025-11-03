@@ -83,13 +83,12 @@ bool patchBytesFromOffset(std::string path, size_t offset, std::string hexBytes)
 }
 
 void patch(std::string path, size_t offset, std::string bytes) {
-    if (patchBytesFromOffset(path, offset, bytes))
+    if (patchBytesFromOffset(path, offset, bytes)) {
         printf("Successfully patched!\n");
-    else
-    {
-        printf("Failed to patch. (Close the program if it's open)\n");
-        while (true) Sleep(1);
+        return;
     }
+    printf("Failed to patch. (Close the proxy if it's open)\n");
+    while (true) Sleep(1);
 }
 
 
@@ -109,9 +108,45 @@ std::string new_secret = "e45b151a42f87533b967fdb497d48e874b4668085f0600fa1b69a1
 int main() {
     /*   Works with V3.87461. (If new version is out, tell joakimmer1k0)    */
 
-
-    std::string path = R"(C:\Users\Public\Proxy_Stuff\Silviozas Premium Proxy.exe)";
+    printf("Silviozas Auto Crack Made By joakimmer1k0. Any problems or need help? Message me in Discord.\n\n");
     
+    if ((int)new_ownerid.length() != 10 || (int)new_secret.length() != 64) {
+        printf("[ERROR]: new_ownerid and new_secret lengths has to be 10 and 64.\n");
+        while (true)
+            Sleep(1);
+    }
+
+    printf("Starting patch...\n");
+    std::string path = R"(C:\Users\Public\Proxy_Stuff\Silviozas Premium Proxy.exe)";
+    std::ifstream in(path, std::ios::binary);
+    if (!in || !in.is_open()) {
+        printf("Proxy File Not Found. Path Should Be At: [%s]\n", path.c_str());
+        while (true)
+            Sleep(1);
+    }
+    in.seekg(0, std::ios::end);
+    int sizeKB = (int)in.tellg() / 1024;
+
+    if (sizeKB < 5000)
+    {
+        printf("[ERROR]: File Isn't Unpacked. Use XVolkolak to Unpack It. Size (kb): %d\n", sizeKB);
+        printf("If You Already Unpacked The File, Rename It to \"Silviozas Premium Proxy\"\n");
+        while (true)
+            Sleep(1);
+    }
+    in.seekg(0, std::ios::beg);
+
+    switch (sizeKB) {
+    case 9640:
+        printf("Current Proxy Version Is: V3.87461\n");
+        break;
+
+    default:
+        printf("This Proxy Version Isn't V3.87461. If There's A New Update, Tell Joakim.\n");
+        while (true)
+            Sleep(1);
+    }
+
     edit_string(path, "[Debugger Detected]", "]21211322 12312311["); // silviozas's proxy server detects cracking with this text packet, which then gives silviozas info of ur pc.
     edit_string(path, original_ownerid, new_ownerid);
     edit_string(path, original_secret, new_secret);
@@ -165,6 +200,7 @@ int main() {
     /* CHECK IN WORLD JOINING */
     patch(path, 0x496C4A, "0F 85 CB 00 00 00 48 8B 84 24 70 0A 00 00 0F B6");
 
+    printf("Finished Patching.\n");
 
     //patch(path, 0x5F1FE7, "90 90 89 05 39 49 2D 00 48 8D 15 5E 68 20 00 48"); // 950a
     //patch(path, 0x5F20A8, "90 90 89 05 78 48 2D 00 E8 CB F8 02 00 48 8D 15"); // a
