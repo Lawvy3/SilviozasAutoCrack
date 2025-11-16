@@ -121,8 +121,7 @@ int main() {
     std::ifstream in(path, std::ios::binary);
     if (!in || !in.is_open()) {
         printf("Proxy File Not Found. Path Should Be At: [%s]\n", path.c_str());
-        while (true)
-            Sleep(1);
+        Sleep(-1);
     }
     in.seekg(0, std::ios::end);
     int sizeKB = (int)in.tellg() / 1024;
@@ -131,8 +130,7 @@ int main() {
     {
         printf("[ERROR]: File Isn't Unpacked. Use XVolkolak to Unpack It. Size (kb): %d\n", sizeKB);
         printf("If You Already Unpacked The File, Rename It to \"Silviozas Premium Proxy\"\n");
-        while (true)
-            Sleep(1);
+        Sleep(-1);
     }
     in.seekg(0, std::ios::beg);
 
@@ -143,8 +141,7 @@ int main() {
 
     default:
         printf("This Proxy Version Isn't V3.87461. If There's A New Update, Tell Joakim.\n");
-        while (true)
-            Sleep(1);
+        Sleep(-1);
     }
 
     edit_string(path, "[Debugger Detected]", "]21211322 12312311["); // silviozas's proxy server detects cracking with this text packet, which then gives silviozas info of ur pc.
@@ -206,6 +203,7 @@ int main() {
     //patch(path, 0x5F20A8, "90 90 89 05 78 48 2D 00 E8 CB F8 02 00 48 8D 15"); // a
 
 
-    while (true) Sleep(1);
+    Sleep(-1);
     return 0;
 }
+
