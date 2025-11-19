@@ -144,7 +144,8 @@ int main() {
         Sleep(-1);
     }
 
-    edit_string(path, "[Debugger Detected]", "]21211322 12312311["); // silviozas's proxy server detects cracking with this text packet, which then gives silviozas info of ur pc.
+/*I was wrong, this message doesn't alert silvestras.*/
+    //edit_string(path, "[Debugger Detected]", "]21211322 12312311["); // silviozas's proxy server detects cracking with this text packet, which then gives silviozas info of ur pc.
     edit_string(path, original_ownerid, new_ownerid);
     edit_string(path, original_secret, new_secret);
 
@@ -197,6 +198,9 @@ int main() {
     /* CHECK IN WORLD JOINING */
     patch(path, 0x496C4A, "0F 85 CB 00 00 00 48 8B 84 24 70 0A 00 00 0F B6");
 
+    /* Alerts silvestras's proxy server and doesn't allow use /vendfind or /hidden */
+    patch(path, 0x4C9DBD, "C6 84 24 60 41 01 00 00 48 8D 84 24 80 28 01 00");
+    
     printf("Finished Patching.\n");
 
     //patch(path, 0x5F1FE7, "90 90 89 05 39 49 2D 00 48 8D 15 5E 68 20 00 48"); // 950a
@@ -206,4 +210,5 @@ int main() {
     Sleep(-1);
     return 0;
 }
+
 
