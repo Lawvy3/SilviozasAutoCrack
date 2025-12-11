@@ -6,98 +6,105 @@
 #include <sstream>
 #include <windows.h>
 
-bool edit_string_to(std::string filePath, std::string oldText, std::string newText) {
-    if (newText.size() > oldText.size()) return false;
+bool edit_string_to(std::string filePath, std::string oldText, std::string newText, int stopAfterFound = -1) {
+	if (newText.size() > oldText.size()) return false;
 
-    std::ifstream in(filePath, std::ios::binary);
-    if (!in) return false;
+	std::ifstream in(filePath, std::ios::binary);
+	if (!in) return false;
 
-    std::vector<char> buffer((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    in.close();
+	std::vector<char> buffer((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+	in.close();
 
-    bool replaced = false;
-    for (size_t i = 0; i + oldText.size() <= buffer.size(); ++i) {
-        if (std::memcmp(&buffer[i], oldText.data(), oldText.size()) == 0) {
-            std::memcpy(&buffer[i], newText.data(), newText.size());
-            for (size_t j = newText.size(); j < oldText.size(); ++j)
-                buffer[i + j] = '\0';
-            replaced = true;
-        }
-    }
+	bool replaced = false;
+	int found = 0;
+	for (size_t i = 0; i + oldText.size() <= buffer.size(); ++i) {
+		if (std::memcmp(&buffer[i], oldText.data(), oldText.size()) == 0) {
+			if (stopAfterFound != -1 && ++found >= stopAfterFound)
+				break;
+			std::memcpy(&buffer[i], newText.data(), newText.size());
+			for (size_t j = newText.size(); j < oldText.size(); ++j)
+				buffer[i + j] = '\0';
+			replaced = true;
+			//printf("Found: %d\n", found);
+		}
+	}
 
-    if (replaced) {
-        std::ofstream out(filePath, std::ios::binary | std::ios::trunc);
-        if (!out) return false;
-        out.write(buffer.data(), buffer.size());
-        out.close();
-    }
+	if (replaced) {
+		std::ofstream out(filePath, std::ios::binary | std::ios::trunc);
+		if (!out) return false;
+		out.write(buffer.data(), buffer.size());
+		out.close();
+	}
 
-    return replaced;
+	return replaced;
 }
 static inline uint8_t hexCharToVal(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
-    if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
-    throw std::invalid_argument("invalid hex char");
+	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
+	if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
+	throw std::invalid_argument("invalid hex char");
 }
 
 std::vector<uint8_t> parseHexBytes(std::string s) {
-    std::string t;
-    for (char c : s) if (!isspace(static_cast<unsigned char>(c))) t.push_back(c);
-    if (t.size() % 2 != 0) throw std::invalid_argument("hex string length must be even");
+	std::string t;
+	for (char c : s) if (!isspace(static_cast<unsigned char>(c))) t.push_back(c);
+	if (t.size() % 2 != 0) throw std::invalid_argument("hex string length must be even");
 
-    std::vector<uint8_t> out;
-    for (size_t i = 0; i < t.size(); i += 2) {
-        uint8_t b = (hexCharToVal(t[i]) << 4) | hexCharToVal(t[i + 1]);
-        out.push_back(b);
-    }
-    return out;
+	std::vector<uint8_t> out;
+	for (size_t i = 0; i < t.size(); i += 2) {
+		uint8_t b = (hexCharToVal(t[i]) << 4) | hexCharToVal(t[i + 1]);
+		out.push_back(b);
+	}
+	return out;
 }
 
 bool patchBytesFromOffset(std::string path, size_t offset, std::string hexBytes) {
-    std::vector<uint8_t> patch;
-    try {
-        patch = parseHexBytes(hexBytes);
-    }
-    catch (...) {
-        return false;
-    }
+	std::vector<uint8_t> patch;
+	try {
+		patch = parseHexBytes(hexBytes);
+	}
+	catch (...) {
+		return false;
+	}
 
-    std::ifstream in(path, std::ios::binary | std::ios::ate);
-    if (!in) return false;
+	std::ifstream in(path, std::ios::binary | std::ios::ate);
+	if (!in) return false;
 
-    std::streamsize sz = in.tellg();
-    in.seekg(0, std::ios::beg);
-    std::vector<uint8_t> buf(static_cast<size_t>(sz));
-    if (!in.read(reinterpret_cast<char*>(buf.data()), sz)) return false;
-    in.close();
+	std::streamsize sz = in.tellg();
+	in.seekg(0, std::ios::beg);
+	std::vector<uint8_t> buf(static_cast<size_t>(sz));
+	if (!in.read(reinterpret_cast<char*>(buf.data()), sz)) return false;
+	in.close();
 
-    if (offset + patch.size() > buf.size()) buf.resize(offset + patch.size(), 0x00);
+	if (offset + patch.size() > buf.size()) buf.resize(offset + patch.size(), 0x00);
 
-    for (size_t i = 0; i < patch.size(); ++i) buf[offset + i] = patch[i];
+	for (size_t i = 0; i < patch.size(); ++i) buf[offset + i] = patch[i];
 
-    std::ofstream out(path, std::ios::binary | std::ios::trunc);
-    if (!out) return false;
-    out.write(reinterpret_cast<const char*>(buf.data()), buf.size());
-    return out.good();
+	std::ofstream out(path, std::ios::binary | std::ios::trunc);
+	if (!out) return false;
+	out.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+	return out.good();
 }
 
 void patch(std::string path, size_t offset, std::string bytes) {
-    if (patchBytesFromOffset(path, offset, bytes)) {
-        printf("Successfully patched!\n");
-        return;
-    }
-    printf("Failed to patch. (Close the proxy if it's open)\n");
-    while (true) Sleep(1);
+	if (patchBytesFromOffset(path, offset, bytes)) {
+		printf("Successfully Patched Offset: %d !\n", (int)offset);
+		return;
+	}
+	printf("Failed to patch. (Close the proxy if it's open)\n");
+	Sleep(-1);
 }
 
 
-void edit_string(std::string filePath, std::string oldText, std::string newText) {
-    if (!edit_string_to(filePath, oldText, newText))
-        printf("Failed to replace \"%s\"  ->  \"%s\"  (Not found. It was probably replaced already)\n", oldText.c_str(), newText.c_str());
-    else
-        printf("Successfully replaced \"%s\"  ->  \"%s\"\n", oldText.c_str(), newText.c_str());
+void edit_string(std::string filePath, std::string oldText, std::string newText, int stopAfterFound = -1) {
+	if (!edit_string_to(filePath, oldText, newText, stopAfterFound))
+		printf("Failed to replace \"%s\"  ->  \"%s\"  (Not found. It was probably replaced already)\n", oldText.c_str(), newText.c_str());
+	else
+		printf("Successfully replaced \"%s\"  ->  \"%s\"\n", oldText.c_str(), newText.c_str());
 }
+
+// NOTE:
+// If you are using own KeyAuth, you gotta name the application as "Premium Proxy" to make it work.
 
 std::string original_ownerid = "fRfa2mUrtR";
 std::string original_secret = "dcce38172ead56bccb8fba908deb3b7baac048f0383c28f60d76f515f77b950a";
@@ -105,110 +112,125 @@ std::string new_ownerid = "KUJxDZyPai";
 std::string new_secret = "e45b151a42f87533b967fdb497d48e874b4668085f0600fa1b69a102c070ddcd";
 
 
-int main() {
-    /*   Works with V3.87461. (If new version is out, tell joakimmer1k0)    */
+std::vector<std::pair<int, std::string>> addresses;
+std::string current_version;
 
-    printf("Silviozas Auto Crack Made By joakimmer1k0. Any problems or need help? Message me in Discord.\n\n");
-    
-    if ((int)new_ownerid.length() != 10 || (int)new_secret.length() != 64) {
-        printf("[ERROR]: new_ownerid and new_secret lengths has to be 10 and 64.\n");
-        while (true)
-            Sleep(1);
-    }
+void GetAdresses(std::string pVersion) {
+	current_version = pVersion;
 
-    printf("Starting patch...\n");
-    std::string path = R"(C:\Users\Public\Proxy_Stuff\Silviozas Premium Proxy.exe)";
-    std::ifstream in(path, std::ios::binary);
-    if (!in || !in.is_open()) {
-        printf("Proxy File Not Found. Path Should Be At: [%s]\n", path.c_str());
-        Sleep(-1);
-    }
-    in.seekg(0, std::ios::end);
-    int sizeKB = (int)in.tellg() / 1024;
+	if (pVersion == "V3.87461")
+		addresses = 
+	{
+	    std::make_pair(0x624077, "90 90 89 05 B9 28 2A 00 EB 0E 8B 05 A1 28 2A 00"),
+	    std::make_pair(0x624087, "90 90 89 05 99 28 2A 00 48 8D 15 06 DD 1D 00 48"),
+		std::make_pair(0x624138, "90 90 89 05 F8 27 2A 00 EB 0E 8B 05 E0 27 2A 00"),
+		std::make_pair(0x624148, "90 90 89 05 D8 27 2A 00 48 8D 84 24 50 02 00 00"),
+		std::make_pair(0x5F1FD7, "90 90 89 05 59 49 2D 00 EB 0E 8B 05 41 49 2D 00"),
+		std::make_pair(0x5F1FE7, "90 90 89 05 39 49 2D 00 48 8D 15 5E 68 20 00 48"),
+		std::make_pair(0x5F2098, "90 90 89 05 98 48 2D 00 EB 0E 8B 05 80 48 2D 00"),
+		std::make_pair(0x5F20A8, "90 90 89 05 78 48 2D 00 E8 CB F8 02 00 48 8D 15"),
+		std::make_pair(0x6219AE, "75 05 E9 EB 23 00 00 48 8D 84 24 10 12 00 00 48"),
+		std::make_pair(0x5EB960, "75 1A 8B 05 C0 AF 2D 00 FF C0 89 05 B8 AF 2D 00"),
+		std::make_pair(0x5EBA12, "75 1A 8B 05 0E AF 2D 00 FF C0 89 05 06 AF 2D 00"),
+		std::make_pair(0x59B3D0, "75 1A 8B 05 50 B5 32 00 FF C0 89 05 48 B5 32 00"),
+		std::make_pair(0x59B482, "75 1A 8B 05 9E B4 32 00 FF C0 89 05 96 B4 32 00"),
+		std::make_pair(0x406750, "75 1A 8B 05 D0 01 4C 00 FF C0 89 05 C8 01 4C 00"),
+		std::make_pair(0x406802, "75 1A 8B 05 1E 01 4C 00 FF C0 89 05 16 01 4C 00"),
+		std::make_pair(0x496D0B, "75 0E C6 05 FF FB 42 00 01 B0 01 E9 DB 11 00 00"),
+		std::make_pair(0x40AC1C, "75 05 E9 2F 12 00 00 48 8B 84 24 10 1F 00 00 0F"),
+		std::make_pair(0x5EFE2C, "75 05 E9 2F 12 00 00 48 8B 84 24 10 1F 00 00 0F"),
+		std::make_pair(0x59F89C, "75 05 E9 2F 12 00 00 48 8B 84 24 10 1F 00 00 0F"),
+		std::make_pair(0x40A5B7, "75 05 E9 94 18 00 00 48 8B 84 24 10 1F 00 00 0F"),
+		std::make_pair(0x5EF7C7, "75 05 E9 94 18 00 00 48 8B 84 24 10 1F 00 00 0F"),
+		std::make_pair(0x59F237, "75 05 E9 94 18 00 00 48 8B 84 24 10 1F 00 00 0F"),
+		std::make_pair(0x40114E, "75 05 E9 C8 62 00 00 48 8B 84 24 C0 42 00 00 0F"),
+		std::make_pair(0x595DCE, "75 05 E9 C8 62 00 00 48 8B 84 24 C0 42 00 00 0F"),
+		std::make_pair(0x5E635E, "75 05 E9 C8 62 00 00 48 8B 84 24 C0 42 00 00 0F"),
+		std::make_pair(0x496C4A, "0F 85 CB 00 00 00 48 8B 84 24 70 0A 00 00 0F B6"),
+		std::make_pair(0x4C9DBD, "C6 84 24 60 41 01 00 00 48 8D 84 24 80 28 01 00") // alert
+	};
 
-    if (sizeKB < 5000)
-    {
-        printf("[ERROR]: File Isn't Unpacked. Use XVolkolak to Unpack It. Size (kb): %d\n", sizeKB);
-        printf("If You Already Unpacked The File, Rename It to \"Silviozas Premium Proxy\"\n");
-        Sleep(-1);
-    }
-    in.seekg(0, std::ios::beg);
-
-    switch (sizeKB) {
-    case 9640:
-        printf("Current Proxy Version Is: V3.87461\n");
-        break;
-
-    default:
-        printf("This Proxy Version Isn't V3.87461. If There's A New Update, Tell Joakim.\n");
-        Sleep(-1);
-    }
-
-/*I was wrong, this message doesn't alert silvestras.*/
-    //edit_string(path, "[Debugger Detected]", "]21211322 12312311["); // silviozas's proxy server detects cracking with this text packet, which then gives silviozas info of ur pc.
-    edit_string(path, original_ownerid, new_ownerid);
-    edit_string(path, original_secret, new_secret);
-
-    patch(path, 0x624077, "90 90 89 05 B9 28 2A 00 EB 0E 8B 05 A1 28 2A 00"); // 950a (first check)
-    patch(path, 0x624087, "90 90 89 05 99 28 2A 00 48 8D 15 06 DD 1D 00 48"); // 950a (first check)
-
-    patch(path, 0x624138, "90 90 89 05 F8 27 2A 00 EB 0E 8B 05 E0 27 2A 00"); // a (first check)
-    patch(path, 0x624148, "90 90 89 05 D8 27 2A 00 48 8D 84 24 50 02 00 00"); // a (first check)
-
-    patch(path, 0x5F1FD7, "90 90 89 05 59 49 2D 00 EB 0E 8B 05 41 49 2D 00"); // 950a
-    patch(path, 0x5F1FE7, "90 90 89 05 39 49 2D 00 48 8D 15 5E 68 20 00 48"); // 950a
-
-    patch(path, 0x5F2098, "90 90 89 05 98 48 2D 00 EB 0E 8B 05 80 48 2D 00"); // a
-    patch(path, 0x5F20A8, "90 90 89 05 78 48 2D 00 E8 CB F8 02 00 48 8D 15"); // a
-
-    patch(path, 0x6219AE, "75 05 E9 EB 23 00 00 48 8D 84 24 10 12 00 00 48");
-
-
-
-    /* PING REPLY (SERVER) */
-    patch(path, 0x5EB960, "75 1A 8B 05 C0 AF 2D 00 FF C0 89 05 B8 AF 2D 00");
-    patch(path, 0x5EBA12, "75 1A 8B 05 0E AF 2D 00 FF C0 89 05 06 AF 2D 00");
-    patch(path, 0x59B3D0, "75 1A 8B 05 50 B5 32 00 FF C0 89 05 48 B5 32 00");
-    patch(path, 0x59B482, "75 1A 8B 05 9E B4 32 00 FF C0 89 05 96 B4 32 00");
-    patch(path, 0x406750, "75 1A 8B 05 D0 01 4C 00 FF C0 89 05 C8 01 4C 00");
-    patch(path, 0x406802, "75 1A 8B 05 1E 01 4C 00 FF C0 89 05 16 01 4C 00");
-
-    /* PING REPLY (CLIENT) */
-    patch(path, 0x496D0B, "75 0E C6 05 FF FB 42 00 01 B0 01 E9 DB 11 00 00");
-
-
-    /* CAN'T MOVE */
-    patch(path, 0x40AC1C, "75 05 E9 2F 12 00 00 48 8B 84 24 10 1F 00 00 0F");
-    patch(path, 0x5EFE2C, "75 05 E9 2F 12 00 00 48 8B 84 24 10 1F 00 00 0F");
-    patch(path, 0x59F89C, "75 05 E9 2F 12 00 00 48 8B 84 24 10 1F 00 00 0F");
-    patch(path, 0x40A5B7, "75 05 E9 94 18 00 00 48 8B 84 24 10 1F 00 00 0F");
-    patch(path, 0x5EF7C7, "75 05 E9 94 18 00 00 48 8B 84 24 10 1F 00 00 0F");
-   // patch(path, 0x408EF3, "75 05 E9 58 2F 00 00 48 8B 44 24 40 0F B6 00 89");
-
-
-    /* CAN'T COLLECT ITEMS */
-    patch(path, 0x59F237, "75 05 E9 94 18 00 00 48 8B 84 24 10 1F 00 00 0F");
-    patch(path, 0x40114E, "75 05 E9 C8 62 00 00 48 8B 84 24 C0 42 00 00 0F");
-    patch(path, 0x595DCE, "75 05 E9 C8 62 00 00 48 8B 84 24 C0 42 00 00 0F");
-
-    /* OBJECTS DON'T UPDATE */
-    patch(path, 0x5E635E, "75 05 E9 C8 62 00 00 48 8B 84 24 C0 42 00 00 0F");
-
-
-    /* CHECK IN WORLD JOINING */
-    patch(path, 0x496C4A, "0F 85 CB 00 00 00 48 8B 84 24 70 0A 00 00 0F B6");
-
-    /* Alerts silvestras's proxy server and doesn't allow use /vendfind or /hidden */
-    patch(path, 0x4C9DBD, "C6 84 24 60 41 01 00 00 48 8D 84 24 80 28 01 00");
-    
-    printf("Finished Patching.\n");
-
-    //patch(path, 0x5F1FE7, "90 90 89 05 39 49 2D 00 48 8D 15 5E 68 20 00 48"); // 950a
-    //patch(path, 0x5F20A8, "90 90 89 05 78 48 2D 00 E8 CB F8 02 00 48 8D 15"); // a
-
-
-    Sleep(-1);
-    return 0;
+	else if (pVersion == "V3.8753")
+		addresses = 
+	{
+		std::make_pair(0x4094C4, "75 05 E9 11 63 00 00 48 8B 84 24 20 43 00 00 0F"),
+		std::make_pair(0x40EB0F, "75 1A 8B 05 ED AF 56 00 FF C0 89 05 E5 AF 56 00"),
+		std::make_pair(0x4129DD, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x413226, "74 05 E9 2F 12 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x58C974, "75 05 E9 11 63 00 00 48 8B 84 24 20 43 00 00 0F"),
+		std::make_pair(0x591FBF, "75 1A 8B 05 3D 7B 3E 00 FF C0 89 05 35 7B 3E 00"),
+		std::make_pair(0x595E8D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x5966D6, "74 05 E9 2F 12 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x608B84, "75 05 E9 11 63 00 00 48 8B 84 24 20 43 00 00 0F"),
+		std::make_pair(0x60E1CF, "75 1A 8B 05 2D B9 36 00 FF C0 89 05 25 B9 36 00"),
+		std::make_pair(0x61209D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x6128E6, "74 05 E9 2F 12 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x659AF4, "75 05 E9 11 63 00 00 48 8B 84 24 20 43 00 00 0F"),
+		std::make_pair(0x65F13F, "75 1A 8B 05 BD A9 31 00 FF C0 89 05 B5 A9 31 00"),
+		std::make_pair(0x66300D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x663856, "74 05 E9 2F 12 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x4D4645, "C6 84 24 E0 45 01 00 00 48 8D 84 24 20 2D 01 00") // alert
+	};
 }
 
+int main() {
+	/*   Works with V3.87461. (If new version is out, tell joakimmer1k0)    */
+
+	printf("Silviozas Auto Crack Made By joakimmer1k0. Any problems or need help? Message me in Discord.\n\n");
+
+	if ((int)new_ownerid.length() != 10 || (int)new_secret.length() != 64) {
+		printf("[ERROR]: new_ownerid and new_secret lengths has to be 10 and 64.\n");
+		while (true)
+			Sleep(1);
+	}
+
+	printf("Starting patch...\n");
+	std::string path = R"(C:\Users\Public\Proxy_Stuff\Silviozas Premium Proxy.exe)";
+	std::ifstream in(path, std::ios::binary);
+	if (!in || !in.is_open()) {
+		printf("Proxy File Not Found. Path Should Be At: [%s]\n", path.c_str());
+		Sleep(-1);
+	}
+	in.seekg(0, std::ios::end);
+	int sizeKB = (int)in.tellg() / 1024;
+
+	if (sizeKB < 5000)
+	{
+		printf("[ERROR]: File Isn't Unpacked. Use XVolkolak to Unpack It. Size (kb): %d\n", sizeKB);
+		printf("If You Already Unpacked The File, Rename It to \"Silviozas Premium Proxy\"\n");
+		Sleep(-1);
+	}
+	//printf("KB: %d\n", sizeKB);
+	in.seekg(0, std::ios::beg);
+
+	switch (sizeKB) {
+
+	case 9640: {
+		printf("Current Proxy Version Is: V3.87461\n");
+		GetAdresses("V3.8753");
+	} break;
+
+	case 10383:
+	case 10382: {
+		printf("Current Proxy Version Is: V3.8753\n");
+		GetAdresses("V3.8753");
+	} break;
+
+	default:
+		printf("This Proxy Version Isn't Supported. If There's A New Update, Tell Joakim.\n");
+		Sleep(-1);
+	}
+
+	edit_string(path, original_ownerid, new_ownerid, current_version == "V3.8753" ? 40 : -1);
+	edit_string(path, original_secret, new_secret);
+
+	for (auto addr : addresses)
+		patch(path, addr.first, addr.second);
+
+	printf("Finished Patching.\n");
+
+
+	Sleep(-1);
+	return 0;
+}
 
