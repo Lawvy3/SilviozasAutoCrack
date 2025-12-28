@@ -6,6 +6,8 @@
 #include <sstream>
 #include <windows.h>
 
+std::string current_version;
+
 bool edit_string_to(std::string filePath, std::string oldText, std::string newText, int stopAfterFound = -1) {
 	if (newText.size() > oldText.size()) return false;
 
@@ -27,6 +29,17 @@ bool edit_string_to(std::string filePath, std::string oldText, std::string newTe
 			replaced = true;
 			//printf("Found: %d\n", found);
 		}
+	}
+
+	if (!found && oldText == "fRfa2mUrtR" && std::stof(current_version.substr(1)) >= 3.8753f)
+		in.close(),
+		printf("\n\033[31mThe file is corrupted. (No OwnerID Found)\n"),
+		printf("\nYou gotta unpack the file again, unless you saved a copy of the unpacked file, and then re-run this Autocrack.\033[0m\n"),
+		Sleep(-1);
+
+	if (found <= 3 && found > 0 && std::stof(current_version.substr(1)) >= 3.8753f) { // Accidental re-run perhaps
+		in.close();
+		return false;
 	}
 
 	if (replaced) {
@@ -97,13 +110,16 @@ void patch(std::string path, size_t offset, std::string bytes) {
 
 
 void edit_string(std::string filePath, std::string oldText, std::string newText, int stopAfterFound = -1) {
-	if (!edit_string_to(filePath, oldText, newText, stopAfterFound))
+	if (!edit_string_to(filePath, oldText, newText, stopAfterFound)) {
 		printf("Failed to replace \"%s\"  ->  \"%s\"  (Not found. It was probably replaced already)\n", oldText.c_str(), newText.c_str());
-	else
-		printf("Successfully replaced \"%s\"  ->  \"%s\"\n", oldText.c_str(), newText.c_str());
+		return;
+	}
+	printf("Successfully replaced \"%s\"  ->  \"%s\"\n", oldText.c_str(), newText.c_str());
 }
 
-// NOTE:
+/*******************   KEYAUTH VARIABLES   *******************/
+
+// IMPORTANT NOTE:
 // If you are using own KeyAuth, you gotta name the application as "Premium Proxy" to make it work.
 
 std::string original_ownerid = "fRfa2mUrtR";
@@ -111,18 +127,19 @@ std::string original_secret = "dcce38172ead56bccb8fba908deb3b7baac048f0383c28f60
 std::string new_ownerid = "KUJxDZyPai";
 std::string new_secret = "e45b151a42f87533b967fdb497d48e874b4668085f0600fa1b69a102c070ddcd";
 
+/*************************************************************/
+
 
 std::vector<std::pair<int, std::string>> addresses;
-std::string current_version;
 
 void GetAdresses(std::string pVersion) {
 	current_version = pVersion;
 
 	if (pVersion == "V3.87461")
-		addresses = 
+		addresses =
 	{
-	    std::make_pair(0x624077, "90 90 89 05 B9 28 2A 00 EB 0E 8B 05 A1 28 2A 00"),
-	    std::make_pair(0x624087, "90 90 89 05 99 28 2A 00 48 8D 15 06 DD 1D 00 48"),
+		std::make_pair(0x624077, "90 90 89 05 B9 28 2A 00 EB 0E 8B 05 A1 28 2A 00"),
+		std::make_pair(0x624087, "90 90 89 05 99 28 2A 00 48 8D 15 06 DD 1D 00 48"),
 		std::make_pair(0x624138, "90 90 89 05 F8 27 2A 00 EB 0E 8B 05 E0 27 2A 00"),
 		std::make_pair(0x624148, "90 90 89 05 D8 27 2A 00 48 8D 84 24 50 02 00 00"),
 		std::make_pair(0x5F1FD7, "90 90 89 05 59 49 2D 00 EB 0E 8B 05 41 49 2D 00"),
@@ -151,7 +168,7 @@ void GetAdresses(std::string pVersion) {
 	};
 
 	else if (pVersion == "V3.8753")
-		addresses = 
+		addresses =
 	{
 		std::make_pair(0x4094C4, "75 05 E9 11 63 00 00 48 8B 84 24 20 43 00 00 0F"),
 		std::make_pair(0x40EB0F, "75 1A 8B 05 ED AF 56 00 FF C0 89 05 E5 AF 56 00"),
@@ -171,6 +188,24 @@ void GetAdresses(std::string pVersion) {
 		std::make_pair(0x663856, "74 05 E9 2F 12 00 00 48 8B 84 24 40 20 00 00 0F"),
 		std::make_pair(0x4D4645, "C6 84 24 E0 45 01 00 00 48 8D 84 24 20 2D 01 00") // alert
 	};
+
+	else if (pVersion == "V3.87542")
+		addresses =
+	{
+		std::make_pair(0x6643D1, "75 1A 8B 05 2B B7 31 00 FF C0 89 05 23 B7 31 00"),
+		std::make_pair(0x66829D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x65ED86, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x613331, "75 1A 8B 05 CB C7 36 00 FF C0 89 05 C3 C7 36 00"),
+		std::make_pair(0x60DCE6, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x6171FD, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x5967B1, "75 1A 8B 05 4B 93 3E 00 FF C0 89 05 43 93 3E 00"),
+		std::make_pair(0x591166, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x59A67D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x4100F1, "75 1A 8B 05 0B FA 56 00 FF C0 89 05 03 FA 56 00"),
+		std::make_pair(0x40AAA6, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x413FBD, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x4D6C10, "C6 84 24 40 48 01 00 00 48 8D 84 24 00 2F 01 00") // alert
+	};
 }
 
 int main() {
@@ -184,7 +219,6 @@ int main() {
 			Sleep(1);
 	}
 
-	printf("Starting patch...\n");
 	std::string path = R"(C:\Users\Public\Proxy_Stuff\Silviozas Premium Proxy.exe)";
 	std::ifstream in(path, std::ios::binary);
 	if (!in || !in.is_open()) {
@@ -192,6 +226,7 @@ int main() {
 		Sleep(-1);
 	}
 	in.seekg(0, std::ios::end);
+
 	int sizeKB = (int)in.tellg() / 1024;
 
 	if (sizeKB < 5000)
@@ -205,30 +240,39 @@ int main() {
 
 	switch (sizeKB) {
 
-	case 9640: {
-		printf("Current Proxy Version Is: V3.87461\n");
+	case 9640:
 		GetAdresses("V3.8753");
-	} break;
+		break;
 
 	case 10383:
-	case 10382: {
-		printf("Current Proxy Version Is: V3.8753\n");
+	case 10382:
 		GetAdresses("V3.8753");
-	} break;
+		break;
+
+	case 10405:
+	case 10406:
+		GetAdresses("V3.87542");
+		break;
 
 	default:
 		printf("This Proxy Version Isn't Supported. If There's A New Update, Tell Joakim.\n");
 		Sleep(-1);
 	}
 
-	edit_string(path, original_ownerid, new_ownerid, current_version == "V3.8753" ? 40 : -1);
+	printf("Current Proxy Version Is: %s\n\n", current_version.c_str());
+
+	printf("Starting patch...\n\n");
+	edit_string(path, original_ownerid, new_ownerid,
+		(current_version == "V3.8753" ||
+		current_version == "V3.87542")
+		? 40 : -1);
+
 	edit_string(path, original_secret, new_secret);
 
 	for (auto addr : addresses)
 		patch(path, addr.first, addr.second);
 
-	printf("Finished Patching.\n");
-
+	printf("\nFinished Patching! (Proxy is ready to use)\n");
 
 	Sleep(-1);
 	return 0;
