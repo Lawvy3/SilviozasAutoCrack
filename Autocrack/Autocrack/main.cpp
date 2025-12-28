@@ -209,8 +209,6 @@ void GetAdresses(std::string pVersion) {
 }
 
 int main() {
-	/*   Works with V3.87461. (If new version is out, tell joakimmer1k0)    */
-
 	printf("Silviozas Auto Crack Made By joakimmer1k0. Any problems or need help? Message me in Discord.\n\n");
 
 	if ((int)new_ownerid.length() != 10 || (int)new_secret.length() != 64) {
@@ -277,4 +275,5 @@ int main() {
 	Sleep(-1);
 	return 0;
 }
+
 
