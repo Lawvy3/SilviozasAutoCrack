@@ -27,7 +27,6 @@ bool edit_string_to(std::string filePath, std::string oldText, std::string newTe
 			for (size_t j = newText.size(); j < oldText.size(); ++j)
 				buffer[i + j] = '\0';
 			replaced = true;
-			//printf("Found: %d\n", found);
 		}
 	}
 
@@ -206,9 +205,28 @@ void GetAdresses(std::string pVersion) {
 		std::make_pair(0x413FBD, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
 		std::make_pair(0x4D6C10, "C6 84 24 40 48 01 00 00 48 8D 84 24 00 2F 01 00") // alert
 	};
+
+	else if (pVersion == "V3.87543")
+		addresses =
+	{
+		std::make_pair(0x665601, "75 1A 8B 05 7B C5 31 00 FF C0 89 05 73 C5 31 00"),
+		std::make_pair(0x65FFB6, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x597961, "75 1A 8B 05 1B A2 3E 00 FF C0 89 05 13 A2 3E 00"),
+		std::make_pair(0x6694CD, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x6143B1, "75 1A 8B 05 CB D7 36 00 FF C0 89 05 C3 D7 36 00"),
+		std::make_pair(0x60ED66, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x61827D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x592316, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x59B82D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+		std::make_pair(0x4112C1, "75 1A 8B 05 BB 08 57 00 FF C0 89 05 B3 08 57 00"),
+		std::make_pair(0x40BC76, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
+		std::make_pair(0x41518D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F")
+	};
 }
 
 int main() {
+	/*   Works with V3.87461. (If new version is out, tell joakimmer1k0)    */
+
 	printf("Silviozas Auto Crack Made By joakimmer1k0. Any problems or need help? Message me in Discord.\n\n");
 
 	if ((int)new_ownerid.length() != 10 || (int)new_secret.length() != 64) {
@@ -252,6 +270,11 @@ int main() {
 		GetAdresses("V3.87542");
 		break;
 
+	case 10412:
+	case 10413:
+		GetAdresses("V3.87543");
+		break;
+
 	default:
 		printf("This Proxy Version Isn't Supported. If There's A New Update, Tell Joakim.\n");
 		Sleep(-1);
@@ -260,10 +283,7 @@ int main() {
 	printf("Current Proxy Version Is: %s\n\n", current_version.c_str());
 
 	printf("Starting patch...\n\n");
-	edit_string(path, original_ownerid, new_ownerid,
-		(current_version == "V3.8753" ||
-		current_version == "V3.87542")
-		? 40 : -1);
+	edit_string(path, original_ownerid, new_ownerid, std::stof(current_version.substr(1)) >= 3.8753f ? 40 : -1);
 
 	edit_string(path, original_secret, new_secret);
 
@@ -275,5 +295,4 @@ int main() {
 	Sleep(-1);
 	return 0;
 }
-
 
