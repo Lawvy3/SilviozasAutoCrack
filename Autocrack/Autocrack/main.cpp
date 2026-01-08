@@ -220,7 +220,8 @@ void GetAdresses(std::string pVersion) {
 		std::make_pair(0x59B82D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
 		std::make_pair(0x4112C1, "75 1A 8B 05 BB 08 57 00 FF C0 89 05 B3 08 57 00"),
 		std::make_pair(0x40BC76, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
-		std::make_pair(0x41518D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F")
+		std::make_pair(0x41518D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
+	    std::make_pair(0x4D7DE0, "C6 84 24 40 48 01 00 00 48 8D 84 24 00 2F 01 00") // alert
 	};
 }
 
@@ -295,4 +296,5 @@ int main() {
 	Sleep(-1);
 	return 0;
 }
+
 
