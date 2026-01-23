@@ -222,12 +222,30 @@ void GetAdresses(std::string pVersion) {
 		std::make_pair(0x40BC76, "75 05 E9 11 63 00 00 48 8B 84 24 80 43 00 00 0F"),
 		std::make_pair(0x41518D, "75 05 E9 78 1A 00 00 48 8B 84 24 40 20 00 00 0F"),
 		//std::make_pair(0x669D16, "75 05 E9 2F 12 00 00 48 8B 84 24 40 20 00 00 0F"),// PACKET_STATE
-	    std::make_pair(0x4D7DE0, "C6 84 24 40 48 01 00 00 48 8D 84 24 00 2F 01 00") // alert
+		std::make_pair(0x4D7DE0, "C6 84 24 40 48 01 00 00 48 8D 84 24 00 2F 01 00") // alert
+	};
+
+	else if (pVersion == "V3.87544")
+		addresses =
+	{
+		std::make_pair(0x4661F0, "75 05 E9 A5 63 00 00 48 8B 84 24 10 46 00 00 0F"),
+		std::make_pair(0x46B8C0, "75 1A 8B 05 BC 22 5C 00 FF C0 89 05 B4 22 5C 00"),
+		std::make_pair(0x470348, "75 05 E9 DB 1C 00 00 48 8B 84 24 70 24 00 00 0F"),
+		std::make_pair(0x609B60, "75 05 E9 A5 63 00 00 48 8B 84 24 10 46 00 00 0F"),
+		std::make_pair(0x60F230, "75 1A 8B 05 4C E9 41 00 FF C0 89 05 44 E9 41 00"),
+		std::make_pair(0x613CB8, "75 05 E9 DB 1C 00 00 48 8B 84 24 70 24 00 00 0F"),
+		std::make_pair(0x69BFB0, "75 05 E9 A5 63 00 00 48 8B 84 24 10 46 00 00 0F"),
+		std::make_pair(0x6A1680, "75 1A 8B 05 FC C4 38 00 FF C0 89 05 F4 C4 38 00"),
+		std::make_pair(0x6A6108, "75 05 E9 DB 1C 00 00 48 8B 84 24 70 24 00 00 0F"),
+		std::make_pair(0x6FDB20, "75 05 E9 A5 63 00 00 48 8B 84 24 10 46 00 00 0F"),
+		std::make_pair(0x7031F0, "75 1A 8B 05 8C A9 32 00 FF C0 89 05 84 A9 32 00"),
+		std::make_pair(0x707C78, "75 05 E9 DB 1C 00 00 48 8B 84 24 70 24 00 00 0F"),
+		std::make_pair(0x546DAE, "C6 84 24 60 48 01 00 00 48 8D 84 24 20 2F 01 00") // alert
 	};
 }
 
 int main() {
-	/*   Works with V3.87461. (If new version is out, tell joakimmer1k0)    */
+	/*   (If new version is out, tell joakimmer1k0)    */
 
 	printf("Silviozas Auto Crack Made By joakimmer1k0. Any problems or need help? Message me in Discord.\n\n");
 
@@ -277,6 +295,11 @@ int main() {
 		GetAdresses("V3.87543");
 		break;
 
+	case 11078:
+	case 11079:
+		GetAdresses("V3.87544");
+		break;
+
 	default:
 		printf("This Proxy Version Isn't Supported. If There's A New Update, Tell Joakim.\n");
 		Sleep(-1);
@@ -297,7 +320,6 @@ int main() {
 	Sleep(-1);
 	return 0;
 }
-
 
 
 
