@@ -1,3 +1,8 @@
+!!NEW!!
+
+Added Auto Update Autocrack (no need to build the autocrack in Visual Studio after building it once)
+
+
 XVolkolak Link (account closed): https://github.com/anomous/XVolkolak
 
 NEW XVolkolak Link: https://n10info.blogspot.com/2018/07/xvolkolak-021.html
