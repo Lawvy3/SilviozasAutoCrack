@@ -1,3 +1,4 @@
+// CREDITS TO Seth Robinson (RTSoft)
 #pragma once
 #include <sstream>
 #include <string>
