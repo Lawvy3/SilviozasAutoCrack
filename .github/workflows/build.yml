@@ -1,1 +1,24 @@
+name: Build EXE
 
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Compile
+      run: |
+        cl /EHsc main.cpp /Fe:program.exe
+
+    - name: Upload EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: program
+        path: program.exe
